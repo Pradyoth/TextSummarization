@@ -28,7 +28,7 @@ public class textSummarization {
 	
 	public static void main(String[] args) throws Exception {
 		
-		File file = new File("D:\\Study\\Semester1\\DataMining\\Project\\input.txt");
+		File file = new File("C:\\Users\\jiten\\Desktop\\input.txt");
 	    @SuppressWarnings("resource")
 		BufferedReader br = new BufferedReader(new FileReader(file));
 	    String text = "";
@@ -50,7 +50,7 @@ public class textSummarization {
 	    ArrayList<String> obj = new ArrayList<>();
 	    ArrayList<String> relation = new ArrayList<String>();
 	    
-	    BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\Study\\Semester1\\DataMining\\Project\\rel_output.txt"));
+	    BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\jiten\\Desktop\\rel_output.txt"));
 	    
 	    Graph<String, DefaultWeightedEdge> multiGraph = new SimpleDirectedWeightedGraph<String, DefaultWeightedEdge>(DefaultWeightedEdge.class); 
 	    
