@@ -14,22 +14,24 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.jena.rdf.model.Statement;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.util.stream.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class textSummarization {
 	
 	public static boolean isSubset(String a, String b)
 	{
 		String words[] = a.split(" ");
-//		System.out.println(a);
-//		System.out.println(b);
 		for(int i=0;i<words.length;i++)
 		{
-			
-//			System.out.println(words[i]);
 			if(!b.contains(words[i]))
 			{
 				return false;
@@ -45,26 +47,12 @@ public class textSummarization {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 	
-	public static void main(String[] args) throws Exception {
-		
-		
-//		String a1 = "Francis";
-//		String a2 = "announced";
-//		String a3 = "Pope Francis new slate";
-//		
-//		String b1 = "Francis";
-//		String b2 = "announced";
-//		String b3 = "Pope Francis new slate of cardinals";
-//		
-//		if(isSubset(a1,b1) && isSubset(a2,b2) && isSubset(a3,b3))
-//		{
-//			System.out.println("true");
-//		}
-		
+	public static void extract(StanfordCoreNLP pipeline, String path) throws IOException
+	{
 		TDBConnection tdb = null;		
 		String namedModel = "KnowlegeGraphs";		
 		tdb = new TDBConnection("graph");
-		File file = new File("D:\\Study\\Semester1\\DataMining\\Project\\input.txt");
+		File file = new File(path);
 	    @SuppressWarnings("resource")
 		BufferedReader br = new BufferedReader(new FileReader(file));
 	    String text = "";
@@ -72,14 +60,6 @@ public class textSummarization {
 	    while ((st = br.readLine()) != null) 
 	        text += st+"\n";
 		
-	    Properties props = new Properties();
-	    props.setProperty("annotators", "tokenize,ssplit,pos,lemma,depparse,parse,natlog,ner,coref,openie");
-	    props.setProperty("openie.resolve_coref","true");
-	    props.setProperty("openie.triple.strict","true");
-//	    props.setProperty("openie.triple.all_nominals","true");
-//	    props.setProperty("openie.format","ollie");
-	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-	    System.out.println("Done.");
 	    Annotation doc = new Annotation(text);
 	    pipeline.annotate(doc);
 	    
@@ -90,8 +70,6 @@ public class textSummarization {
 	    
 	    Map<String,nodes> adjList = new HashMap<String,nodes>();
 	    
-//	    BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\Study\\Semester1\\DataMining\\Project\\rel_output.txt"));
-	    
 	    Graph<String, DefaultWeightedEdge> multiGraph = new SimpleDirectedWeightedGraph<String, DefaultWeightedEdge>(DefaultWeightedEdge.class); 
   	  	
 	    for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
@@ -101,14 +79,6 @@ public class textSummarization {
 	    	  String src = triple.subjectGloss();
 	    	  String des = triple.objectGloss();
 	    	  String rel = triple.relationGloss();
-	    	  
-//	    	  System.out.println(triple.subjectGloss() + "|" +
-//		  	            triple.relationGloss() + "|" +
-//			            triple.objectGloss() + "\n");
-	    	  
-//	    	  writer.write(triple.subjectGloss() + "|" +
-//	  	            triple.relationGloss() + "|" +
-//		            triple.objectGloss() + "\n");
 	    	  
 	    	  sub.add(src);
 	    	  
@@ -121,19 +91,12 @@ public class textSummarization {
 	      
 	      }
 	      
-//	      writer.close();
-	      
 	      for(int i=0;i<sub.size();i++)
-	      {
-//	    	  System.out.println("node:");
-//	    	  System.out.println(sub.get(i)+"|"+obj.get(i)+"|"+relation.get(i));
-//			  System.out.println("subsets:");
-			  
+	      {			  
 	    	  for(int j=0;j<sub.size();j++)
 	    	  {
 	    		  if(i==j || isRemoved.get(i) || isRemoved.get(j))
 	    			  continue;
-//	    		  System.out.println(sub.get(j)+"|"+obj.get(j)+"|"+relation.get(j));
 	    		  String textJ = sub.get(j) + " " + relation.get(j) + " " + obj.get(j);
 	    		  if(textJ.contains("at_time"))
 				  {
@@ -146,21 +109,18 @@ public class textSummarization {
 				  }
 	    		  if(isSubset(sub.get(j),sub.get(i)) && isSubset(obj.get(j),obj.get(i)) && isSubset(relation.get(j),relation.get(i)))//isSubset(textJ,textI))
 	    		  {
-//	    			  System.out.println("removed" + ":" +sub.get(j)+"|"+obj.get(j)+"|"+relation.get(j));
 	    			  isRemoved.set(j,true);	    			  
 	    		  }
 	    	  }
 	      }
 	      
 	      int index=0;
-//	      System.out.println(sub.size());
 	      while(true)
 	      {
 	    	  if(index>=sub.size())
 	    		  break;
 	    	  if(isRemoved.get(index))
 	    	  {
-//	    		  System.out.println("removed" + ":" +sub.get(index)+"|"+obj.get(index)+"|"+relation.get(index));
 		    	  sub.remove(index);
 				  obj.remove(index);
 				  relation.remove(index);
@@ -171,7 +131,7 @@ public class textSummarization {
 	    		  index++;
 	    	  }
 	      }
-//	      System.out.println(sub.size());
+
 	      for(int i=0;i<sub.size();i++)
 	      {
 	    	  String src = sub.get(i);
@@ -198,7 +158,6 @@ public class textSummarization {
 	    	  
 	    	  DefaultWeightedEdge edge = new DefaultWeightedEdge();
 	    	  multiGraph.addEdge(src,des,edge);
-//	    	  double weight = relation.indexOf(rel);
 	    	  multiGraph.setEdgeWeight(edge,1);
 	    	  
 	    	  tdb.addStatement( namedModel, src, rel, des );	
@@ -233,7 +192,6 @@ public class textSummarization {
 				String obje = results.get(k).getObject().toString();
 				if(obje.contains(subj))
 				{
-//					System.out.println("here");
 					obje = obje.replace(subj,"");
 				}
 				if(pred.contains("at_time"))
@@ -249,7 +207,6 @@ public class textSummarization {
 				prevSubj = subj;
 				prevPred = pred;
 				prevObje = obje;
-//				System.out.println(results.get(k));
 			}
 	    }
 	    summary = summary.replace("  "," ");
@@ -263,13 +220,38 @@ public class textSummarization {
     	    
     	    tdb.removeStatement(namedModel,src,rel,des);
         }
+	}
+	
+	public static void main(String[] args) throws Exception {
+		
+		Properties props = new Properties();
+	    props.setProperty("annotators", "tokenize,ssplit,pos,lemma,depparse,parse,natlog,ner,coref,openie");
+	    props.setProperty("openie.resolve_coref","true");
+	    props.setProperty("openie.triple.strict","true");
+//	    props.setProperty("openie.triple.all_nominals","true");
+//	    props.setProperty("openie.format","ollie");
+	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+	    System.out.println("Done.");
 	    
-//	    List<Statement> results = tdb.getStatements(namedModel,null,null,null);
-//		
-//		for(int i=0;i<results.size();i++)
-//		{
-//			System.out.println(results.get(i));
-//		}
+	    String dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed";
+	    
+	    try(Stream<Path> paths = Files.walk( Paths.get(dir) ))
+        {
+            System.out.println("Parsing started...");
+            paths
+            .filter(Files::isRegularFile)
+            .forEach( path -> {
+				try {
+					extract(pipeline,path.toString());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+        }
+        catch(Exception e)
+        {
+            throw e;
+        }
 	}
 }
 
