@@ -156,11 +156,19 @@ public class textSummarization {
 	    	  node.insert(des,rel);
 	    	  adjList.put(src,node);
 	    	  
-	    	  DefaultWeightedEdge edge = new DefaultWeightedEdge();
-	    	  multiGraph.addEdge(src,des,edge);
-	    	  multiGraph.setEdgeWeight(edge,1);
+	    	  try
+	    	  {
+	    		  DefaultWeightedEdge edge = new DefaultWeightedEdge();
+	    		  multiGraph.addEdge(src,des,edge);
+	    		  multiGraph.setEdgeWeight(edge,1);
 	    	  
-	    	  tdb.addStatement( namedModel, src, rel, des );	
+	    		  tdb.addStatement( namedModel, src, rel, des );
+	    	  }
+	    	  catch(Exception e)
+	    	  {
+	    		  System.out.print(e);
+	    		  System.out.println(" ERROR: " + src + " " + des + " " + rel);
+	    	  }
 	    }
 	    
 	    PageRank pg_graph = new PageRank(multiGraph);

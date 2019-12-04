@@ -5,3 +5,7 @@
 /.classpath
 /.project
 
+/TDBConnection.class
+/nodes.class
+/RogueN.class
+/graph
