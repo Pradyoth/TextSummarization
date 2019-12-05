@@ -20,6 +20,33 @@ public class RogueN
     private double avgRogue1F;
     private double avgRogue2F;
 
+    public static int lcs(String referenceSum, String systemSum) 
+    { 	
+	 	String[] X = referenceSum.split(" ");
+	 	String[] Y = systemSum.split(" ");
+
+	 	int m = X.length;
+	 	int n = Y.length;
+	 
+        int[][] L = new int[m+1][n+1]; 
+   
+        // Following steps build L[m+1][n+1] in bottom up fashion. Note 
+        // that L[i][j] contains length of LCS of X[0..i-1] and Y[0..j-1]  
+        for (int i=0; i<=m; i++) 
+        { 
+            for (int j=0; j<=n; j++) 
+            { 
+                if (i == 0 || j == 0) 
+                    L[i][j] = 0; 
+                else if (X[i-1].equals(Y[j-1])) 
+                    L[i][j] = L[i-1][j-1] + 1; 
+                else
+                    L[i][j] = Math.max(L[i-1][j], L[i][j-1]); 
+            } 
+        } 
+        return L[m][n];
+    }
+    
     private List<Double> computeRogueN(String sysSummary, String refSummary)
     {
         // Remove punctuation and lowercase everything
@@ -67,7 +94,6 @@ public class RogueN
             }
         }
         numComBi = comBigrams.size();
-
         double r1rec = (double)numComUni/numUniRef;
         double r1pre = (double)numComUni/numUniSys;
         double r1F = 2 * r1rec * r1pre / (r1rec + r1pre);
@@ -76,13 +102,21 @@ public class RogueN
         double r2pre = (double)numComBi/numBiSys;
         double r2F = 2 * r2rec * r2pre / (r2rec + r2pre);
 
+        int len = lcs(refSummary,sysSummary);
+        double rlrec = (double)len/numUniRef;
+        double rlpre = (double)len/numUniSys;
+        double rlF = 2 * rlrec * rlpre / (rlrec + rlpre);
+
+        
         List<Double> r = new ArrayList<Double>();
         r.add(r1F);
         r.add(r2F);
+        r.add(rlF);
         //return  new double[]{r1F, r2F};
         return r;
     }
 
+     
     private void Compute(Path ref_path)
     {
         String data = System.getenv("PROJECT_HOME") + File.separator + "data";
