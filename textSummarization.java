@@ -281,7 +281,8 @@ public class textSummarization {
 	    System.out.println("Done.");
 	    
 	    String dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed" + File.separator + "text";
-	    
+	    String out_dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "output";
+	    FileUtils.cleanDirectory(new File(out_dir)); 
 	    try(Stream<Path> paths = Files.walk( Paths.get(dir) ))
         {
             System.out.println("Parsing started...");
