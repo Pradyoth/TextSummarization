@@ -49,6 +49,7 @@ public class textSummarization {
 	
 	public static void extract(StanfordCoreNLP pipeline, String path) throws IOException
 	{
+		System.out.println("Parsing file:\n"+path);
 		TDBConnection tdb = null;		
 		String namedModel = "KnowlegeGraphs";		
 		tdb = new TDBConnection("graph");
@@ -219,7 +220,42 @@ public class textSummarization {
 	    }
 	    summary = summary.replace("  "," ");
 	    summary += ".";
-	    System.out.println(summary.substring(2,summary.length()));
+//	    System.out.println(summary.substring(2,summary.length()));
+	    
+	    summary = summary.substring(2,summary.length()) + "\n";
+	    BufferedWriter bw = null;
+	    try 
+	    {
+	    	int lastIndex = path.lastIndexOf("\\");
+	    	int secondLastIndex = path.substring(0,lastIndex).lastIndexOf("\\");
+	    	String new_path = path.substring(0,secondLastIndex+1) + "output" + path.substring(lastIndex,path.length());
+//	    	System.out.println(new_path);
+	    	File out_file = new File(new_path);
+	    	if (!out_file.exists()) 
+	    	{
+	    		out_file.createNewFile();
+	   	  	}
+	    	
+	    	FileWriter fw = new FileWriter(out_file);
+	    	bw = new BufferedWriter(fw);
+	  	  	bw.write(summary);
+	    }
+	    catch (IOException e) 
+	    {
+            e.printStackTrace();
+        }
+	    finally
+	    {
+            try 
+            {
+            	bw.close();
+            } 
+            catch (IOException e) 
+            {
+                e.printStackTrace();
+            }
+        }
+	    
 	    for(int i=0;i<sub.size();i++)
         {
     	    String src = sub.get(i);
@@ -238,6 +274,7 @@ public class textSummarization {
 	    props.setProperty("openie.triple.strict","true");
 //	    props.setProperty("openie.triple.all_nominals","true");
 //	    props.setProperty("openie.format","ollie");
+	    System.out.println("Loading models...");
 	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 	    System.out.println("Done.");
 	    
@@ -260,6 +297,8 @@ public class textSummarization {
         {
             throw e;
         }
+	    
+	    System.out.println("Finished Parsing.");
 	}
 }
 
