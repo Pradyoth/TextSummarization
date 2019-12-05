@@ -34,16 +34,18 @@ public class Parser
             String dir_parsed = data + File.separator + "parsed";
             Files.createDirectories(Paths.get(dir_parsed));
 
-            String parsed = dir_parsed + File.separator + path.getFileName().toString();
+            String parsed_summary = dir_parsed + File.separator + "summary" + File.separator  + path.getFileName().toString();
+            String parsed_text = dir_parsed + File.separator + "text" + File.separator + path.getFileName().toString();
 
             try
             {
-                File out = new File(parsed);
-                if(out.exists())
+                File out_summary = new File(parsed_summary);
+                out_summary.getParentFile().mkdirs();
+                if(out_summary.exists())
                     return false;
 
-                out.createNewFile();
-                BufferedWriter bw = new BufferedWriter(new FileWriter(out));
+                out_summary.createNewFile();
+                BufferedWriter bw_summary = new BufferedWriter(new FileWriter(out_summary));
 
                 // Assuming there are at least two lines in each file
                 String line = br.readLine();
@@ -59,20 +61,28 @@ public class Parser
                 if(idx != -1)
                     line = line.substring(idx + token.length());
 
-                bw.write(line);
-                bw.newLine();
-
+                bw_summary.write(line);
+                bw_summary.flush();
+                bw_summary.close();
+                
+    	    	File out_text = new File(parsed_text);
+    	    	out_text.getParentFile().mkdirs();
+                if(out_text.exists())
+                    return false;
+                out_text.createNewFile();
+                BufferedWriter bw_text = new BufferedWriter(new FileWriter(out_text));
+                
                 line = br.readLine();
                 while(line != null && !line.equals("@highlight"))
                 {
                     if(line.length()>0)
                     {
-                        bw.write(line + " ");
+                    	bw_text.write(line + " ");
                     }
                     line = br.readLine();
                 }
-                bw.newLine();
-                bw.flush();
+                bw_text.flush();
+                bw_text.close();
             }
             catch(Exception e)
             {

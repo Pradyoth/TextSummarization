@@ -23,8 +23,10 @@ PROJECT_HOME
 .
 ├── data
 │   ├── parsed
-│   │   └── 0001d1afc246a7964130f43ae940af6bc6c57f01.story
-│   └── stories
+│   │   ├──summary── 0001d1afc246a7964130f43ae940af6bc6c57f01.story
+│   │	└──text── 0001d1afc246a7964130f43ae940af6bc6c57f01.story
+│	├── output── 0001d1afc246a7964130f43ae940af6bc6c57f01.story
+│	└── stories
 │       └── 0001d1afc246a7964130f43ae940af6bc6c57f01.story
 ├── graphGeneration.py
 ├── PageRank.java

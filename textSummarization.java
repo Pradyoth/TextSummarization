@@ -226,11 +226,13 @@ public class textSummarization {
 	    BufferedWriter bw = null;
 	    try 
 	    {
-	    	int lastIndex = path.lastIndexOf("\\");
-	    	int secondLastIndex = path.substring(0,lastIndex).lastIndexOf("\\");
-	    	String new_path = path.substring(0,secondLastIndex+1) + "output" + path.substring(lastIndex,path.length());
-//	    	System.out.println(new_path);
+	    	int lastIndex = path.lastIndexOf(File.separator);
+	    	int secondLastIndex = path.substring(0,lastIndex).lastIndexOf(File.separator);
+	    	int thirdLastIndex = path.substring(0,secondLastIndex).lastIndexOf(File.separator);
+	    	String new_path = path.substring(0,thirdLastIndex+1) + "output" + path.substring(lastIndex,path.length());
+	    	System.out.println("Summary output to : " + new_path);
 	    	File out_file = new File(new_path);
+	    	out_file.getParentFile().mkdirs();
 	    	if (!out_file.exists()) 
 	    	{
 	    		out_file.createNewFile();
@@ -278,7 +280,7 @@ public class textSummarization {
 	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 	    System.out.println("Done.");
 	    
-	    String dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed";
+	    String dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed" + File.separator + "text";
 	    
 	    try(Stream<Path> paths = Files.walk( Paths.get(dir) ))
         {
