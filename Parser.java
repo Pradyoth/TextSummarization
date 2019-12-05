@@ -1,5 +1,8 @@
 import java.io.*;
 import java.util.stream.*;
+
+import org.apache.commons.io.FileUtils;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -109,7 +112,8 @@ public class Parser
     {
         num_parsed = 0;
         String dir = data + File.separator + "stories";
-        
+	    FileUtils.cleanDirectory(new File(System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed" + File.separator + "summary"));
+	    FileUtils.cleanDirectory(new File(System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed" + File.separator + "text"));
         try(Stream<Path> paths = Files.walk( Paths.get(dir) ))
         {
             System.out.println("Parsing started...");

@@ -21,7 +21,6 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.*;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.stream.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -180,16 +179,12 @@ public class textSummarization {
 	    
 	    int c=0;
 	    
-	    ArrayList<String> top_n_nodes = new ArrayList<>();
-	    
 	    String summary = "";
-	    String prevSubj = "";
 		String prevPred = "";
-		String prevObje = "";
 	    
 	    for (Map.Entry<String,Integer> me:set) 
 	    {
-	    	if(c==2)
+	    	if(c==1)
 	    		break;
 	    	c++;
 	    	List<Statement> results = tdb.getStatements(namedModel,me.getKey(),null,null);
@@ -213,15 +208,17 @@ public class textSummarization {
 					summary += ", " + obje;
 				else
 					summary += "."+" "+subj+" "+pred+" "+obje;
-				prevSubj = subj;
 				prevPred = pred;
-				prevObje = obje;
 			}
 	    }
 	    summary = summary.replace("  "," ");
 	    summary += ".";
 //	    System.out.println(summary.substring(2,summary.length()));
 	    
+	    if(summary.length()<3)
+	    {
+	    	return;
+	    }
 	    summary = summary.substring(2,summary.length()) + "\n";
 	    BufferedWriter bw = null;
 	    try 
@@ -289,9 +286,12 @@ public class textSummarization {
             paths
             .filter(Files::isRegularFile)
             .forEach( path -> {
-				try {
+				try 
+				{
 					extract(pipeline,path.toString());
-				} catch (IOException e) {
+				} 
+				catch (IOException e) 
+				{
 					e.printStackTrace();
 				}
 			});

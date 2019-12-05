@@ -17,8 +17,10 @@ public class RogueN
     private int numBiSys;
     private int numBiRef;
 
-    private double avgRogue1F;
-    private double avgRogue2F;
+    private static double avgRogue1F;
+    private static double avgRogue2F;
+    private static double avgRoguelF;
+    private static int count;
 
     public static int lcs(String referenceSum, String systemSum) 
     { 	
@@ -112,45 +114,50 @@ public class RogueN
         r.add(r1F);
         r.add(r2F);
         r.add(rlF);
-        //return  new double[]{r1F, r2F};
         return r;
     }
 
      
-    private void Compute(Path ref_path)
+    private void Compute(Path sys_path)
     {
-        String data = System.getenv("PROJECT_HOME") + File.separator + "data";
-        String sys_dir = data + File.separator + "output";
+    	String data = System.getenv("PROJECT_HOME") + File.separator + "data";
+        String ref_dir = data + File.separator + "parsed" + File.separator + "summary";
 
-        String sys_summary = sys_dir + File.separator + ref_path.getFileName().toString();
+        String ref_summary = ref_dir + File.separator + sys_path.getFileName().toString();
 
         try
         {
-            File sys_file = new File(sys_summary);
-            if(sys_file.exists())
+            File ref_file = new File(ref_summary);
+            if(ref_file.exists())
             {
-                BufferedReader ref_br = new BufferedReader(new FileReader(ref_path.toString()));
-                BufferedReader sys_br = new BufferedReader(new FileReader( sys_summary ));
+                BufferedReader ref_br = new BufferedReader(new FileReader(ref_summary));
+                BufferedReader sys_br = new BufferedReader(new FileReader( sys_path.toString() ));
 
                 String ref = ref_br.readLine();
                 String sys = sys_br.readLine();
 
                 List<Double> F = computeRogueN(sys, ref);
+                
                 if(!F.contains(Double.NaN))
                 {
+                	count++;
+                	avgRogue1F += F.get(0);
+                	avgRogue2F += F.get(1);
+                	avgRoguelF += F.get(2);
                     for(double f: F)
                         System.out.print(f+" ");
                     System.out.println();
                 }
                 else
                 {
-                    System.out.println("Failed for " + sys_file + ", " + ref_path.toString());
+//                    System.out.println("Failed for " + ref_file + ", " + sys_path.toString());
                 }
-
+                ref_br.close();
+                sys_br.close();
             }
             else
             {
-                System.out.println(sys_file + " doesn't exist.");
+                System.out.println(ref_file + " doesn't exist.");
             }
         }
         catch(Exception e)
@@ -162,11 +169,12 @@ public class RogueN
     public void Process()
     {
         String data = System.getenv("PROJECT_HOME") + File.separator + "data";
-        String ref_dir = data + File.separator + "parsed" + File.separator + "summary";
+        String sys_dir = data + File.separator + "output";
 
-        try(Stream<Path> paths = Files.walk( Paths.get(ref_dir) ))
+        try(Stream<Path> paths = Files.walk( Paths.get(sys_dir) ))
         {
             System.out.println("Computing RogueN measures...");
+            System.out.println("Outputting in order : R1F R2F RLF");
                 paths
                     .filter(Files::isRegularFile)
                     .forEach( path -> Compute(path) );
@@ -180,14 +188,15 @@ public class RogueN
 
     public static void main(String[] args)
     {
-
+    	avgRogue1F=0;
+    	avgRogue2F=0;
+    	avgRoguelF=0;
+    	count=0;
         RogueN RN = new RogueN();
         RN.Process();
-        
-        //RogueN RN = new RogueN(
-        //        "France 's Teddy Tamgho became third man leap over 18m in jump. France 's Teddy Tamgho exceeding mark by four centimeters. France 's Teddy Tamgho third man leap over 18m in triple jump. France     's Teddy Tamgho became In other final action on last day of championships. Germany 's Christina Obergfoll finally took gold. Germany 's Christina Obergfoll finally took gold after five previous silvers. Germ    any 's Christina Obergfoll finally took gold at global level in women 's javelin. Germany 's Christina Obergfoll clarify comments.",
-        //        " France    dsdsfsdf France 123    Teddy  Teddy  tamgho became third 212 "
-        //        );
-        //System.out.println(RN.rogue1Recall());
+        avgRogue1F=avgRogue1F/count;
+    	avgRogue2F=avgRogue2F/count;
+    	avgRoguelF=avgRoguelF/count;
+        System.out.print("Averages : \nR1F : "+avgRogue1F+" R2F : "+avgRogue2F+ " RLF : "+avgRoguelF);
     }
 }
