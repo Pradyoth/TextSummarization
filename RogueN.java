@@ -1,5 +1,9 @@
 import java.io.*;
 import java.util.*;
+import java.util.stream.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 
 public class RogueN
@@ -13,7 +17,10 @@ public class RogueN
     private int numBiSys;
     private int numBiRef;
 
-    public RogueN(String sysSummary, String refSummary)
+    private double avgRogue1F;
+    private double avgRogue2F;
+
+    private List<Double> computeRogueN(String sysSummary, String refSummary)
     {
         // Remove punctuation and lowercase everything
         String[] tSys = sysSummary.replaceAll("\\p{P}", "").toLowerCase().trim().split("\\s+");
@@ -60,48 +67,93 @@ public class RogueN
             }
         }
         numComBi = comBigrams.size();
+
+        double r1rec = (double)numComUni/numUniRef;
+        double r1pre = (double)numComUni/numUniSys;
+        double r1F = 2 * r1rec * r1pre / (r1rec + r1pre);
+
+        double r2rec = (double)numComBi/numBiRef;
+        double r2pre = (double)numComBi/numBiSys;
+        double r2F = 2 * r2rec * r2pre / (r2rec + r2pre);
+
+        List<Double> r = new ArrayList<Double>();
+        r.add(r1F);
+        r.add(r2F);
+        //return  new double[]{r1F, r2F};
+        return r;
     }
 
-    public double rogue1Recall()
+    private void Compute(Path ref_path)
     {
-        return (double)numComUni/numUniRef;
+        String data = System.getenv("PROJECT_HOME") + File.separator + "data";
+        String sys_dir = data + File.separator + "output";
+
+        String sys_summary = sys_dir + File.separator + ref_path.getFileName().toString();
+
+        try
+        {
+            File sys_file = new File(sys_summary);
+            if(sys_file.exists())
+            {
+                BufferedReader ref_br = new BufferedReader(new FileReader(ref_path.toString()));
+                BufferedReader sys_br = new BufferedReader(new FileReader( sys_summary ));
+
+                String ref = ref_br.readLine();
+                String sys = sys_br.readLine();
+
+                List<Double> F = computeRogueN(sys, ref);
+                if(!F.contains(Double.NaN))
+                {
+                    for(double f: F)
+                        System.out.print(f+" ");
+                    System.out.println();
+                }
+                else
+                {
+                    System.out.println("Failed for " + sys_file + ", " + ref_path.toString());
+                }
+
+            }
+            else
+            {
+                System.out.println(sys_file + " doesn't exist.");
+            }
+        }
+        catch(Exception e)
+        {
+            System.out.println(e);
+        }
     }
 
-    public double rogue1Precision()
+    public void Process()
     {
-        return (double)numComUni/numUniSys;
-    }
+        String data = System.getenv("PROJECT_HOME") + File.separator + "data";
+        String ref_dir = data + File.separator + "parsed" + File.separator + "summary";
 
-    public double rogue1F()
-    {
-        double rec = (double)numComUni/numUniRef;
-        double pre = (double)numComUni/numUniSys;
-        return 2 * rec * pre / (rec + pre);
-    }
-
-    public double rogue2Recall()
-    {
-        return (double)numComBi/numBiRef;
-    }
-
-    public double rogue2Precison()
-    {
-        return (double)numComBi/numBiSys;
-    }
-
-    public double rogue2F()
-    {
-        double rec = (double)numComBi/numBiRef;
-        double pre = (double)numComBi/numBiSys;
-        return 2 * rec * pre / (rec + pre);
+        try(Stream<Path> paths = Files.walk( Paths.get(ref_dir) ))
+        {
+            System.out.println("Computing RogueN measures...");
+                paths
+                    .filter(Files::isRegularFile)
+                    .forEach( path -> Compute(path) );
+            System.out.println("Finished RogueN measures...");
+        }
+        catch(Exception e)
+        {
+            System.out.println(e);
+        }
     }
 
     public static void main(String[] args)
     {
-        RogueN RN = new RogueN(
-                "France 's Teddy Tamgho became third man leap over 18m in jump. France 's Teddy Tamgho exceeding mark by four centimeters. France 's Teddy Tamgho third man leap over 18m in triple jump. France     's Teddy Tamgho became In other final action on last day of championships. Germany 's Christina Obergfoll finally took gold. Germany 's Christina Obergfoll finally took gold after five previous silvers. Germ    any 's Christina Obergfoll finally took gold at global level in women 's javelin. Germany 's Christina Obergfoll clarify comments.",
-                " France    dsdsfsdf France 123    Teddy  Teddy  tamgho became third 212 "
-                );
-        System.out.println(RN.rogue1Recall());
+
+        RogueN RN = new RogueN();
+        RN.Process();
+        
+        //RogueN RN = new RogueN(
+        //        "France 's Teddy Tamgho became third man leap over 18m in jump. France 's Teddy Tamgho exceeding mark by four centimeters. France 's Teddy Tamgho third man leap over 18m in triple jump. France     's Teddy Tamgho became In other final action on last day of championships. Germany 's Christina Obergfoll finally took gold. Germany 's Christina Obergfoll finally took gold after five previous silvers. Germ    any 's Christina Obergfoll finally took gold at global level in women 's javelin. Germany 's Christina Obergfoll clarify comments.",
+        //        " France    dsdsfsdf France 123    Teddy  Teddy  tamgho became third 212 "
+        //        );
+        //System.out.println(RN.rogue1Recall());
     }
 }
