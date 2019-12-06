@@ -20,8 +20,24 @@ public class RogueF
     private static double avgRogue1F;
     private static double avgRogue2F;
     private static double avgRoguelF;
+    private static double avgRogueSF;
     private static int count;
 
+    public static List<String> generateSkipGrams(String str) {
+        String[] retstr = str.replaceAll("[^a-zA-Z0-9 ]", "").split("\\s+");
+        return generateSkipGrams2(retstr);
+    }
+    
+    private static List<String> generateSkipGrams2(String[] s) {
+        List<String> skipgrams = new ArrayList<>();
+        for (int i = 0; i < s.length; i++) {
+            for (int j = i + 1; j < s.length; j++) {
+            	skipgrams.add(s[i]+" "+s[j]);
+            }
+        }
+        return skipgrams;
+    }
+    
     public static int lcs(String referenceSum, String systemSum) 
     { 	
 	 	String[] X = referenceSum.split(" ");
@@ -109,11 +125,33 @@ public class RogueF
         double rlpre = (double)len/numUniSys;
         double rlF = 2 * rlrec * rlpre / (rlrec + rlpre);
 
+        int numComSkip = 0;
+        List<String> ref_Skip = generateSkipGrams(refSummary);
+        List<String> sys_Skip = generateSkipGrams(sysSummary);
+        
+        int numSkipSys = sys_Skip.size();
+        int numSkipRef = ref_Skip.size();
+        Set<String> comSkipGrams = new HashSet<String>();
+        for(String word: sys_Skip)
+        {
+            if(ref_Skip.contains(word) && !comSkipGrams.contains(word))
+            {
+                numComSkip++;
+                comSkipGrams.add(word);
+            }
+        }
+        numComSkip = comSkipGrams.size();
+        
+        double rSrec = (double)numComSkip/numSkipRef;
+        double rSpre = (double)numComSkip/numSkipSys;
+        double rSF = 2 * rSrec * rSpre / (rSrec + rSpre);
+        		
         
         List<Double> r = new ArrayList<Double>();
         r.add(r1F);
         r.add(r2F);
         r.add(rlF);
+        r.add(rSF);
         return r;
     }
 
@@ -144,6 +182,7 @@ public class RogueF
                 	avgRogue1F += F.get(0);
                 	avgRogue2F += F.get(1);
                 	avgRoguelF += F.get(2);
+                	avgRogueSF += F.get(3);
                     for(double f: F)
                         System.out.print(f+" ");
                     System.out.println();
@@ -191,12 +230,14 @@ public class RogueF
     	avgRogue1F=0;
     	avgRogue2F=0;
     	avgRoguelF=0;
+    	avgRogueSF=0;
     	count=0;
         RogueF RF = new RogueF();
         RF.Process();
         avgRogue1F=avgRogue1F/count;
     	avgRogue2F=avgRogue2F/count;
     	avgRoguelF=avgRoguelF/count;
-        System.out.print("Averages for " + count + " files : \nR1F : "+avgRogue1F+" R2F : "+avgRogue2F+ " RLF : "+avgRoguelF);
+    	avgRogueSF=avgRogueSF/count;
+        System.out.print("Averages for " + count + " files : \nR1F : "+avgRogue1F+" \nR2F : "+avgRogue2F+ "\nRLF : "+avgRoguelF + "\nRSF : "+avgRogueSF);
     }
 }
