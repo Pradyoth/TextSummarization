@@ -25,6 +25,11 @@ import java.nio.file.Paths;
 
 public class textSummarization {
 	
+	// Number of files to parse, if not specified parse all
+    private static int num = -1;
+	
+	public static int count = 0;
+	
 	public static boolean isSubset(String a, String b)
 	{
 		String words[] = a.split(" ");
@@ -47,7 +52,8 @@ public class textSummarization {
 	
 	public static void extract(StanfordCoreNLP pipeline, String path) throws IOException
 	{
-		System.out.println("Parsing file:\n"+path);
+		count++;
+		System.out.println("Parsing file number : "+count+"\n"+path);
 		int lastIndex = path.lastIndexOf(File.separator);
     	int secondLastIndex = path.substring(0,lastIndex).lastIndexOf(File.separator);
     	int thirdLastIndex = path.substring(0,secondLastIndex).lastIndexOf(File.separator);
@@ -289,6 +295,7 @@ public class textSummarization {
             System.out.println("Parsing started...");
             paths
             .filter(Files::isRegularFile)
+            .limit(num)
             .forEach( path -> {
 				try 
 				{
