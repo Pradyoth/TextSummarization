@@ -27,17 +27,6 @@ public class TDBConnection
 		
 		ds.begin( ReadWrite.WRITE );
 		
-//		System.out.println("here1"+ds.containsNamedModel(modelName));
-//		if(!ds.containsNamedModel(modelName))
-//		{
-//			//System.out.println("here");
-//			model = ModelFactory.createDefaultModel();
-//		}		
-//		else
-//		{
-//			
-//		}
-		
 		model = ds.getNamedModel( modelName );
 		
 		try

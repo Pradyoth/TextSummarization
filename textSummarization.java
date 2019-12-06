@@ -15,7 +15,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Statement;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.*;
@@ -49,6 +48,15 @@ public class textSummarization {
 	public static void extract(StanfordCoreNLP pipeline, String path) throws IOException
 	{
 		System.out.println("Parsing file:\n"+path);
+		int lastIndex = path.lastIndexOf(File.separator);
+    	int secondLastIndex = path.substring(0,lastIndex).lastIndexOf(File.separator);
+    	int thirdLastIndex = path.substring(0,secondLastIndex).lastIndexOf(File.separator);
+    	String new_path = path.substring(0,thirdLastIndex+1) + "output" + path.substring(lastIndex,path.length());
+    	if (new File(new_path).exists()) 
+    	{
+    		System.out.println("File "+new_path+" already parsed.");
+    		return;
+   	  	}
 		TDBConnection tdb = null;		
 		String namedModel = "KnowlegeGraphs";		
 		tdb = new TDBConnection("graph");
@@ -223,10 +231,6 @@ public class textSummarization {
 	    BufferedWriter bw = null;
 	    try 
 	    {
-	    	int lastIndex = path.lastIndexOf(File.separator);
-	    	int secondLastIndex = path.substring(0,lastIndex).lastIndexOf(File.separator);
-	    	int thirdLastIndex = path.substring(0,secondLastIndex).lastIndexOf(File.separator);
-	    	String new_path = path.substring(0,thirdLastIndex+1) + "output" + path.substring(lastIndex,path.length());
 	    	System.out.println("Summary output to : " + new_path);
 	    	File out_file = new File(new_path);
 	    	out_file.getParentFile().mkdirs();
@@ -278,8 +282,8 @@ public class textSummarization {
 	    System.out.println("Done.");
 	    
 	    String dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed" + File.separator + "text";
-	    String out_dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "output";
-	    FileUtils.cleanDirectory(new File(out_dir)); 
+//	    String out_dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "output";
+//	    FileUtils.cleanDirectory(new File(out_dir)); 
 	    try(Stream<Path> paths = Files.walk( Paths.get(dir) ))
         {
             System.out.println("Parsing started...");

@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import java.nio.file.Files;
 
 
-public class RogueN
+public class RogueF
 {
 
     private int numComUni;
@@ -192,11 +192,11 @@ public class RogueN
     	avgRogue2F=0;
     	avgRoguelF=0;
     	count=0;
-        RogueN RN = new RogueN();
-        RN.Process();
+        RogueF RF = new RogueF();
+        RF.Process();
         avgRogue1F=avgRogue1F/count;
     	avgRogue2F=avgRogue2F/count;
     	avgRoguelF=avgRoguelF/count;
-        System.out.print("Averages : \nR1F : "+avgRogue1F+" R2F : "+avgRogue2F+ " RLF : "+avgRoguelF);
+        System.out.print("Averages for " + count + " files : \nR1F : "+avgRogue1F+" R2F : "+avgRogue2F+ " RLF : "+avgRoguelF);
     }
 }
