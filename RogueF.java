@@ -65,17 +65,15 @@ public class RogueF
         return L[m][n];
     }
     
-    private List<Double> computeRogueN(String sysSummary, String refSummary)
+    private double computeRogue1F(String sysSummary, String refSummary)
     {
-        // Remove punctuation and lowercase everything
+    	// Remove punctuation and lowercase everything
         String[] tSys = sysSummary.replaceAll("\\p{P}", "").toLowerCase().trim().split("\\s+");
         String[] tRef = refSummary.replaceAll("\\p{P}", "").toLowerCase().trim().split("\\s+");
 
-        // Number of unigrams and bigrams
+        // Number of bigrams
         numUniSys   = tSys.length;
-        numBiSys    = tSys.length - 1;
         numUniRef   = tRef.length;
-        numBiRef    = tRef.length - 1;
 
         Set<String> sysUnigrams = new HashSet<String>(Arrays.asList(tSys));
         Set<String> refUnigrams = new HashSet<String>(Arrays.asList(tRef));
@@ -91,8 +89,23 @@ public class RogueF
             }
         }
         numComUni   = comUnigrams.size();
+        
+        double r1rec = (double)numComUni/numUniRef;
+        double r1pre = (double)numComUni/numUniSys;
+        double r1F = 2 * r1rec * r1pre / (r1rec + r1pre);
+        return r1F;
+    }
+    
+    private double computeRogue2F(String sysSummary, String refSummary)
+    {
+    	// Remove punctuation and lowercase everything
+        String[] tSys = sysSummary.replaceAll("\\p{P}", "").toLowerCase().trim().split("\\s+");
+        String[] tRef = refSummary.replaceAll("\\p{P}", "").toLowerCase().trim().split("\\s+");
 
-
+        // Number of bigrams
+        numBiSys    = tSys.length - 1;
+        numBiRef    = tRef.length - 1;
+        
         Set<String> sysBigrams = new HashSet<String>();
         for(int i=1; i < tSys.length; i++)
             sysBigrams.add(tSys[i-1]+tSys[i]);
@@ -112,20 +125,24 @@ public class RogueF
             }
         }
         numComBi = comBigrams.size();
-        double r1rec = (double)numComUni/numUniRef;
-        double r1pre = (double)numComUni/numUniSys;
-        double r1F = 2 * r1rec * r1pre / (r1rec + r1pre);
-
         double r2rec = (double)numComBi/numBiRef;
         double r2pre = (double)numComBi/numBiSys;
         double r2F = 2 * r2rec * r2pre / (r2rec + r2pre);
-
-        int len = lcs(refSummary,sysSummary);
-        double rlrec = (double)len/numUniRef;
-        double rlpre = (double)len/numUniSys;
-        double rlF = 2 * rlrec * rlpre / (rlrec + rlpre);
-
-        int numComSkip = 0;
+        return r2F;
+    }
+    
+    private double computeRogueLF(String sysSummary, String refSummary)
+    {
+    	int len = lcs(refSummary,sysSummary);
+        double rLrec = (double)len/numUniRef;
+        double rLpre = (double)len/numUniSys;
+        double rLF = 2 * rLrec * rLpre / (rLrec + rLpre);
+        return rLF;
+    }
+    
+    private double computeRogueSkipF(String sysSummary, String refSummary)
+    {
+    	int numComSkip = 0;
         List<String> ref_Skip = generateSkipGrams(refSummary);
         List<String> sys_Skip = generateSkipGrams(sysSummary);
         
@@ -145,7 +162,19 @@ public class RogueF
         double rSrec = (double)numComSkip/numSkipRef;
         double rSpre = (double)numComSkip/numSkipSys;
         double rSF = 2 * rSrec * rSpre / (rSrec + rSpre);
-        		
+        return rSF;
+    }
+    
+    private List<Double> computeRogueF(String sysSummary, String refSummary)
+    {
+        
+        double r1F = computeRogue1F(sysSummary,refSummary);
+
+        double r2F = computeRogue2F(sysSummary,refSummary);
+
+        double rlF = computeRogueLF(sysSummary,refSummary);
+
+        double rSF = computeRogueSkipF(sysSummary,refSummary);		
         
         List<Double> r = new ArrayList<Double>();
         r.add(r1F);
@@ -174,7 +203,7 @@ public class RogueF
                 String ref = ref_br.readLine();
                 String sys = sys_br.readLine();
 
-                List<Double> F = computeRogueN(sys, ref);
+                List<Double> F = computeRogueF(sys, ref);
                 
                 if(!F.contains(Double.NaN))
                 {
@@ -238,6 +267,6 @@ public class RogueF
     	avgRogue2F=avgRogue2F/count;
     	avgRoguelF=avgRoguelF/count;
     	avgRogueSF=avgRogueSF/count;
-        System.out.print("Averages for " + count + " files : \nR1F : "+avgRogue1F+" \nR2F : "+avgRogue2F+ "\nRLF : "+avgRoguelF + "\nRSF : "+avgRogueSF);
+        System.out.print("Averages for " + count + " files : R1F : "+avgRogue1F+" R2F : "+avgRogue2F+ " RLF : "+avgRoguelF + " RSF : "+avgRogueSF);
     }
 }
