@@ -6,18 +6,42 @@ import edu.stanford.nlp.naturalli.NaturalLogicAnnotations;
 import edu.stanford.nlp.util.CoreMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.jena.rdf.model.Statement;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.*;
-
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class textSummarization {
+	
+	// Number of files to parse, if not specified parse all
+    private static int num = -1;
+	
+	public static int count = 0;
+	
+	public static boolean isSubset(String a, String b)
+	{
+		String words[] = a.split(" ");
+		for(int i=0;i<words.length;i++)
+		{
+			if(!b.contains(words[i]))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	public static Map<String, Integer> sortByValue(final Map<String, Integer> wordCounts) {
         return wordCounts.entrySet()
@@ -26,9 +50,23 @@ public class textSummarization {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 	
-	public static void main(String[] args) throws Exception {
-		
-		File file = new File("D:\\Study\\Semester1\\DataMining\\Project\\input.txt");
+	public static void extract(StanfordCoreNLP pipeline, String path) throws IOException
+	{
+		count++;
+		System.out.println("Parsing file number : "+count+"\n"+path);
+		int lastIndex = path.lastIndexOf(File.separator);
+    	int secondLastIndex = path.substring(0,lastIndex).lastIndexOf(File.separator);
+    	int thirdLastIndex = path.substring(0,secondLastIndex).lastIndexOf(File.separator);
+    	String new_path = path.substring(0,thirdLastIndex+1) + "output" + path.substring(lastIndex,path.length());
+    	if (new File(new_path).exists()) 
+    	{
+    		System.out.println("File "+new_path+" already parsed.");
+    		return;
+   	  	}
+		TDBConnection tdb = null;		
+		String namedModel = "KnowlegeGraphs";		
+		tdb = new TDBConnection("graph");
+		File file = new File(path);
 	    @SuppressWarnings("resource")
 		BufferedReader br = new BufferedReader(new FileReader(file));
 	    String text = "";
@@ -36,24 +74,18 @@ public class textSummarization {
 	    while ((st = br.readLine()) != null) 
 	        text += st+"\n";
 		
-	    Properties props = new Properties();
-	    props.setProperty("annotators", "tokenize,ssplit,pos,lemma,depparse,parse,natlog,ner,coref,openie");
-	    props.setProperty("openie.resolve_coref","true");
-	    //props.setProperty("openie.triple.all_nominals","true");
-	    //props.setProperty("openie.format","ollie");
-	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-	    System.out.println("Done.");
 	    Annotation doc = new Annotation(text);
 	    pipeline.annotate(doc);
 	    
 	    ArrayList<String> sub = new ArrayList<>();
 	    ArrayList<String> obj = new ArrayList<>();
 	    ArrayList<String> relation = new ArrayList<String>();
+	    ArrayList<Boolean> isRemoved = new ArrayList<Boolean>();
 	    
-	    BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\Study\\Semester1\\DataMining\\Project\\rel_output.txt"));
+	    Map<String,nodes> adjList = new HashMap<String,nodes>();
 	    
 	    Graph<String, DefaultWeightedEdge> multiGraph = new SimpleDirectedWeightedGraph<String, DefaultWeightedEdge>(DefaultWeightedEdge.class); 
-	    
+  	  	
 	    for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
 	      Collection<RelationTriple> triples = sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
 	      for (RelationTriple triple : triples) {
@@ -62,35 +94,96 @@ public class textSummarization {
 	    	  String des = triple.objectGloss();
 	    	  String rel = triple.relationGloss();
 	    	  
-	    	  if(!sub.contains(src))
+	    	  sub.add(src);
+	    	  
+	    	  obj.add(des);
+	    	  
+	    	  relation.add(rel);
+	    	  
+	    	  isRemoved.add(false);
+	      	}
+	      
+	      }
+	      
+	      for(int i=0;i<sub.size();i++)
+	      {			  
+	    	  for(int j=0;j<sub.size();j++)
 	    	  {
-	    		  sub.add(src);
+	    		  if(i==j || isRemoved.get(i) || isRemoved.get(j))
+	    			  continue;
+	    		  String textJ = sub.get(j) + " " + relation.get(j) + " " + obj.get(j);
+	    		  if(textJ.contains("at_time"))
+				  {
+	    			  textJ = textJ.replace("at_time","");
+				  }
+	    		  String textI = sub.get(i) + " " + relation.get(i) + " " + obj.get(i);
+	    		  if(textI.contains("at_time"))
+				  {
+	    			  textI = textI.replace("at_time","");
+				  }
+	    		  if(isSubset(sub.get(j),sub.get(i)) && isSubset(obj.get(j),obj.get(i)) && isSubset(relation.get(j),relation.get(i)))//isSubset(textJ,textI))
+	    		  {
+	    			  isRemoved.set(j,true);	    			  
+	    		  }
+	    	  }
+	      }
+	      
+	      int index=0;
+	      while(true)
+	      {
+	    	  if(index>=sub.size())
+	    		  break;
+	    	  if(isRemoved.get(index))
+	    	  {
+		    	  sub.remove(index);
+				  obj.remove(index);
+				  relation.remove(index);
+				  isRemoved.remove(index);
+	    	  }
+	    	  else
+	    	  {
+	    		  index++;
+	    	  }
+	      }
+
+	      for(int i=0;i<sub.size();i++)
+	      {
+	    	  String src = sub.get(i);
+	    	  String des = obj.get(i);
+	    	  String rel = relation.get(i);
+	    	  
+	    	  if(!adjList.containsKey(src))
+	    	  {
+	    		  nodes temp = new nodes();
+	    		  adjList.put(src,temp);
 	    		  multiGraph.addVertex(src);
 	    	  }
-	    	  if(!obj.contains(des))
+	    	  
+	    	  if(!adjList.containsKey(des))
 	    	  {
-	    		  obj.add(des);	    	
+	    		  nodes temp = new nodes();
+	    		  adjList.put(des,temp);
 	    		  multiGraph.addVertex(des);
 	    	  }
 	    	  
-	    	  relation.add(rel);
-	    	  DefaultWeightedEdge edge = new DefaultWeightedEdge();
-	    	  multiGraph.addEdge(src,des,edge);
-	    	  double weight = relation.indexOf(rel);
-	    	  multiGraph.setEdgeWeight(edge,weight);
+	    	  nodes node = adjList.get(src);
+	    	  node.insert(des,rel);
+	    	  adjList.put(src,node);
 	    	  
-	    	  System.out.println(triple.confidence + "|" +
-	            triple.subjectGloss() + "|" +
-	            triple.relationGloss() + "|" +
-	            triple.objectGloss());
+	    	  try
+	    	  {
+	    		  DefaultWeightedEdge edge = new DefaultWeightedEdge();
+	    		  multiGraph.addEdge(src,des,edge);
+	    		  multiGraph.setEdgeWeight(edge,1);
 	    	  
-	    	  writer.write(triple.subjectGloss() + "|" +
-	  	            triple.relationGloss() + "|" +
-		            triple.objectGloss() + "\n");
-	      }
+	    		  tdb.addStatement( namedModel, src, rel, des );
+	    	  }
+	    	  catch(Exception e)
+	    	  {
+	    		  System.out.print(e);
+	    		  System.out.println(" ERROR: " + src + " " + des + " " + rel);
+	    	  }
 	    }
-	    
-	    writer.close();
 	    
 	    PageRank pg_graph = new PageRank(multiGraph);
 	    @SuppressWarnings("unchecked")
@@ -98,11 +191,128 @@ public class textSummarization {
 	    
 	    Set< Map.Entry<String,Integer> > set = (Set<Entry<String, Integer>>) scores.entrySet();
 	    
+	    int c=0;
+	    
+	    String summary = "";
+		String prevPred = "";
+	    
 	    for (Map.Entry<String,Integer> me:set) 
 	    {
-	    	System.out.print(me.getKey()+":"); 
-	    	System.out.println(me.getValue()); 
+	    	if(c==1)
+	    		break;
+	    	c++;
+	    	List<Statement> results = tdb.getStatements(namedModel,me.getKey(),null,null);
+			
+			for(int k=0;k<results.size();k++)
+			{
+				String subj = results.get(k).getSubject().toString();
+				String pred = results.get(k).getPredicate().toString();
+				String obje = results.get(k).getObject().toString();
+				if(obje.contains(subj))
+				{
+					obje = obje.replace(subj,"");
+				}
+				if(pred.contains("at_time"))
+				{
+					pred = pred.replace("at_time","");
+				}
+				if(isSubset(pred,summary) && isSubset(obje,summary))
+					continue;
+				if(pred == prevPred)
+					summary += ", " + obje;
+				else
+					summary += "."+" "+subj+" "+pred+" "+obje;
+				prevPred = pred;
+			}
 	    }
+	    summary = summary.replace("  "," ");
+	    summary += ".";
+//	    System.out.println(summary.substring(2,summary.length()));
+	    
+	    if(summary.length()<3)
+	    {
+	    	return;
+	    }
+	    summary = summary.substring(2,summary.length()) + "\n";
+	    BufferedWriter bw = null;
+	    try 
+	    {
+	    	System.out.println("Summary output to : " + new_path);
+	    	File out_file = new File(new_path);
+	    	out_file.getParentFile().mkdirs();
+	    	if (!out_file.exists()) 
+	    	{
+	    		out_file.createNewFile();
+	   	  	}
+	    	
+	    	FileWriter fw = new FileWriter(out_file);
+	    	bw = new BufferedWriter(fw);
+	  	  	bw.write(summary);
+	    }
+	    catch (IOException e) 
+	    {
+            e.printStackTrace();
+        }
+	    finally
+	    {
+            try 
+            {
+            	bw.close();
+            } 
+            catch (IOException e) 
+            {
+                e.printStackTrace();
+            }
+        }
+	    
+	    for(int i=0;i<sub.size();i++)
+        {
+    	    String src = sub.get(i);
+    	    String des = obj.get(i);
+    	    String rel = relation.get(i);
+    	    
+    	    tdb.removeStatement(namedModel,src,rel,des);
+        }
+	}
+	
+	public static void main(String[] args) throws Exception {
+		
+		Properties props = new Properties();
+	    props.setProperty("annotators", "tokenize,ssplit,pos,lemma,depparse,parse,natlog,ner,coref,openie");
+	    props.setProperty("openie.resolve_coref","true");
+	    props.setProperty("openie.triple.strict","true");
+//	    props.setProperty("openie.triple.all_nominals","true");
+//	    props.setProperty("openie.format","ollie");
+	    System.out.println("Loading models...");
+	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+	    System.out.println("Done.");
+	    
+	    String dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "parsed" + File.separator + "text";
+//	    String out_dir = System.getenv("PROJECT_HOME") + File.separator + "data" + File.separator + "output";
+//	    FileUtils.cleanDirectory(new File(out_dir)); 
+	    try(Stream<Path> paths = Files.walk( Paths.get(dir) ))
+        {
+            System.out.println("Parsing started...");
+            paths
+            .filter(Files::isRegularFile)
+            .limit(num)
+            .forEach( path -> {
+				try 
+				{
+					extract(pipeline,path.toString());
+				} 
+				catch (IOException e) 
+				{
+					e.printStackTrace();
+				}
+			});
+        }
+        catch(Exception e)
+        {
+            throw e;
+        }
+	    
+	    System.out.println("Finished Parsing.");
 	}
 }
 
