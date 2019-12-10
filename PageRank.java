@@ -5,62 +5,56 @@ import java.util.*;
 
 public final class PageRank
 {
-    public static final int MAX_ITERATIONS_DEFAULT = 100;
-    public static final double TOLERANCE_DEFAULT = 0.0001;
-    public static final double DAMPING_FACTOR_DEFAULT = 0.85d;
-
     private final Graph<String, DefaultWeightedEdge> g;
 
     @SuppressWarnings("rawtypes")
-	private Map scores = new HashMap<String, Double>();
+	private Map vertexScores = new HashMap<String, Double>();
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	public PageRank(Graph g)
     {
         this.g = g;
-        this.scores = new HashMap<String, Double>();
+        this.vertexScores = new HashMap<String, Double>();
 
-        run(DAMPING_FACTOR_DEFAULT, MAX_ITERATIONS_DEFAULT, TOLERANCE_DEFAULT);
+        run(0.85d,100,0.0001);
     }
 
     @SuppressWarnings("rawtypes")
 	public Map getScores()
     {
-        return scores;
+        return vertexScores;
     }
 
     public Double getVertexScore(String v)
     {
         if (!g.containsVertex(v)) {
-            throw new IllegalArgumentException("Cannot return score of unknown vertex");
+            System.out.println("no such vertex");
+            return null;
         }
-        return (Double) scores.get(v);
+        return (Double) vertexScores.get(v);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-	private void run(double dampingFactor, int maxIterations, double tolerance)
+	private void run(double dampingFactor, int iterations, double tolerance)
     {
         // initialization
         int totalVertices = g.vertexSet().size();
 
-        double initScore = 1.0d / totalVertices;
+        double startScore = 1.0d / totalVertices;
         for (String v : g.vertexSet()) {
-        	//scores.put(v, g.outgoingEdgesOf(v).size() + g.incomingEdgesOf(v).size());
-            scores.put(v, initScore);
+        	vertexScores.put(v, startScore);
         }
 
-        // run PageRank
-        Map nextScores = new HashMap<>();
+        Map updatedScores = new HashMap<>();
         double maxChange = tolerance;
 
-        while (maxIterations > 0 && maxChange >= tolerance) {
-            // compute next iteration scores
+        while (iterations > 0 && maxChange >= tolerance) {
             double r = 0d;
             for (String v : g.vertexSet()) {
                 if (g.outgoingEdgesOf(v).size() + g.incomingEdgesOf(v).size() > 0) {
-                    r += (1d - dampingFactor) * (Double)scores.get(v);
+                    r += (1d - dampingFactor) * (Double)vertexScores.get(v);
                 } else {
-                    r += (Double)scores.get(v);
+                    r += (Double)vertexScores.get(v);
                 }
             }
             r /= totalVertices;
@@ -71,27 +65,27 @@ public final class PageRank
 
                 for (DefaultWeightedEdge e : g.incomingEdgesOf(v)) {
                     String w = Graphs.getOppositeVertex(g, e, v);
-                    contribution += dampingFactor * (Double)scores.get(w) / (g.outgoingEdgesOf(w).size()+g.incomingEdgesOf(w).size());
+                    contribution += dampingFactor * (Double)vertexScores.get(w) / (g.outgoingEdgesOf(w).size()+g.incomingEdgesOf(w).size());
                 }
                 
                 for (DefaultWeightedEdge e : g.outgoingEdgesOf(v)) {
                     String w = Graphs.getOppositeVertex(g, e, v);
-                    contribution += dampingFactor * (Double)scores.get(w) / (g.outgoingEdgesOf(w).size()+g.incomingEdgesOf(w).size());
+                    contribution += dampingFactor * (Double)vertexScores.get(w) / (g.outgoingEdgesOf(w).size()+g.incomingEdgesOf(w).size());
                 }
 
-                double vOldValue = (Double)scores.get(v);
+                double vOldValue = (Double)vertexScores.get(v);
                 double vNewValue = r + contribution;
                 maxChange = Math.max(maxChange, Math.abs(vNewValue - vOldValue));
-                nextScores.put(v, vNewValue);
+                updatedScores.put(v, vNewValue);
             }
 
             // swap scores
-            Map tmp = scores;
-            scores = nextScores;
-            nextScores = tmp;
+            Map temp = vertexScores;
+            vertexScores = updatedScores;
+            updatedScores = temp;
 
             // progress
-            maxIterations--;
+            iterations--;
         }
 
     }
