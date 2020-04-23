@@ -1,6 +1,12 @@
 # TextSummarization using knowledge graphs
 Text Summarization using Knowledge Graphs
 
+Team Members:
+1) Pradyoth Srinivasan
+2) Srinivas Baskar
+3) Shruthi Sridharan
+4) Jitendra M
+
 Build instruction (maybe move this to separate file later)
 1. Clone git repo to your PC.
 2. Include all the external jar files required.
