@@ -1,4 +1,4 @@
-# TextSummarization
+# TextSummarization using knowledge graphs
 Text Summarization using Knowledge Graphs
 
 Build instruction (maybe move this to separate file later)
